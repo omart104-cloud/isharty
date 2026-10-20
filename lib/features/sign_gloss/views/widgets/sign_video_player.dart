@@ -1,5 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -7,6 +14,7 @@ import '../../../../core/theme/app_colors.dart';
 /// A production-ready, responsive video player widget tailored for ASL gloss playback.
 ///
 /// Features:
+/// - Robust local cache downloading avoiding iOS AVPlayer CoreMedia byte-range mismatch (error -12939).
 /// - Autoplay enabled on initialization.
 /// - Looping enabled by default for continuous sign gesture observation.
 /// - Aspect ratio preservation.
@@ -28,6 +36,37 @@ class SignGlossVideoPlayer extends StatefulWidget {
 }
 
 class _SignGlossVideoPlayerState extends State<SignGlossVideoPlayer> {
+  static final Dio _cacheDio = _createCacheDio();
+
+  static Dio _createCacheDio() {
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 30),
+        followRedirects: true,
+        maxRedirects: 5,
+        headers: {
+          'User-Agent':
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+        },
+      ),
+    );
+
+    if (!kIsWeb) {
+      final adapter = dio.httpClientAdapter;
+      if (adapter is IOHttpClientAdapter) {
+        adapter.createHttpClient = () {
+          final client = HttpClient();
+          client.badCertificateCallback =
+              (X509Certificate cert, String host, int port) => true;
+          return client;
+        };
+      }
+    }
+
+    return dio;
+  }
+
   VideoPlayerController? _controller;
   bool _isInitializing = true;
   String? _initError;
@@ -80,8 +119,45 @@ class _SignGlossVideoPlayerState extends State<SignGlossVideoPlayer> {
 
     try {
       final playableUrl = resolvePlayableUrl(url);
-      final uri = Uri.parse(playableUrl);
-      final controller = VideoPlayerController.networkUrl(uri);
+      VideoPlayerController controller;
+
+      if (!kIsWeb) {
+        // iOS AVPlayer fails with CoreMedia error -12939 on servers that do not
+        // support HTTP 206 Partial Content byte-ranges (returning full 200 OK for byte 0-1).
+        // Pre-downloading and playing from local cache completely avoids byte-range requests.
+        File? localFile;
+        try {
+          final tempDir = await getTemporaryDirectory();
+          final cacheDir = Directory('${tempDir.path}/sign_videos');
+          if (!await cacheDir.exists()) {
+            await cacheDir.create(recursive: true);
+          }
+
+          final hash = md5.convert(utf8.encode(playableUrl)).toString();
+          final targetFile = File('${cacheDir.path}/$hash.mp4');
+
+          if (await targetFile.exists() && await targetFile.length() > 0) {
+            localFile = targetFile;
+          } else {
+            final tmpFile = File('${cacheDir.path}/$hash.tmp');
+            await _cacheDio.download(playableUrl, tmpFile.path, deleteOnError: true);
+            if (await tmpFile.exists() && await tmpFile.length() > 0) {
+              await tmpFile.rename(targetFile.path);
+              localFile = targetFile;
+            }
+          }
+        } catch (downloadErr) {
+          debugPrint('SignGlossVideoPlayer: cache download fallback due to: $downloadErr');
+        }
+
+        if (localFile != null && await localFile.exists()) {
+          controller = VideoPlayerController.file(localFile);
+        } else {
+          controller = VideoPlayerController.networkUrl(Uri.parse(playableUrl));
+        }
+      } else {
+        controller = VideoPlayerController.networkUrl(Uri.parse(playableUrl));
+      }
 
       _controller = controller;
 
@@ -251,141 +327,158 @@ class _SignGlossVideoPlayerState extends State<SignGlossVideoPlayer> {
                       ),
                     ),
 
-                  // Center Play/Pause Overlay Button
-                  if (controller != null &&
-                      controller.value.isInitialized &&
-                      (!controller.value.isPlaying || _showControls))
-                    GestureDetector(
-                      onTap: _togglePlayPause,
-                      child: AnimatedOpacity(
-                        opacity: (!controller.value.isPlaying || _showControls) ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.55),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+                  // Video Controls Overlay
+                  if (!_isInitializing && _initError == null && _showControls && controller != null)
+                    AnimatedOpacity(
+                      opacity: _showControls ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.4),
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.6),
+                            ],
                           ),
-                          child: Icon(
-                            controller.value.isPlaying
-                                ? Icons.pause_rounded
-                                : Icons.play_arrow_rounded,
-                            size: 38,
-                            color: Colors.white,
-                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Top Bar (Gloss Title + Speed indicator)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  if (widget.glossTitle != null)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black45,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        widget.glossTitle!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    const SizedBox.shrink(),
+
+                                  // Playback Speed Button
+                                  InkWell(
+                                    onTap: _cyclePlaybackSpeed,
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryBlue.withOpacity(0.85),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.speed_rounded, size: 14, color: Colors.white),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${_playbackSpeed}x',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Center Play / Pause Indicator Button
+                            IconButton(
+                              iconSize: 52,
+                              icon: Icon(
+                                controller.value.isPlaying
+                                    ? Icons.pause_circle_filled_rounded
+                                    : Icons.play_circle_filled_rounded,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                              onPressed: _togglePlayPause,
+                            ),
+
+                            // Bottom Progress Bar
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: VideoProgressIndicator(
+                                controller,
+                                allowScrubbing: true,
+                                colors: const VideoProgressColors(
+                                  playedColor: AppColors.primaryBlue,
+                                  bufferedColor: Colors.white30,
+                                  backgroundColor: Colors.white12,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-
-                  // Quick Looping Badge
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white24, width: 0.5),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.repeat_rounded, size: 13, color: Colors.white70),
-                          SizedBox(width: 4),
-                          Text(
-                            'Looping',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
 
-          // Video Control Strip
+          // Bottom Control Footer Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+            color: AppColors.surfaceLight,
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Play / Pause Icon
-                IconButton(
-                  tooltip: controller?.value.isPlaying == true ? 'Pause' : 'Play',
-                  icon: Icon(
-                    controller?.value.isPlaying == true
-                        ? Icons.pause_circle_filled_rounded
-                        : Icons.play_circle_fill_rounded,
-                    color: AppColors.primaryNavy,
-                    size: 28,
-                  ),
-                  onPressed: _togglePlayPause,
-                ),
-
-                // Replay button
-                IconButton(
-                  tooltip: 'Replay from start',
-                  icon: const Icon(Icons.replay_rounded, size: 22, color: AppColors.primaryNavy),
-                  onPressed: () {
-                    controller?.seekTo(Duration.zero);
-                    controller?.play();
-                  },
-                ),
-
-                const Spacer(),
-
-                // Playback speed selector chip
-                InkWell(
-                  onTap: _cyclePlaybackSpeed,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryNavy.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.primaryNavy.withOpacity(0.2)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.speed_rounded, size: 16, color: AppColors.primaryNavy),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${_playbackSpeed}x',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primaryNavy,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-
-                // Copy video link
-                IconButton(
-                  tooltip: 'Copy video URL',
-                  icon: const Icon(Icons.copy_rounded, size: 19, color: AppColors.secondaryText),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: widget.videoUrl));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Video URL copied to clipboard'),
-                        duration: Duration(seconds: 2),
-                        behavior: SnackBarBehavior.floating,
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        (controller != null && controller.value.isPlaying)
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        color: AppColors.primaryNavy,
+                        size: 22,
                       ),
-                    );
-                  },
+                      onPressed: _togglePlayPause,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      (controller != null && controller.value.isPlaying) ? 'جارٍ التشغيل...' : 'متوقف',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton.icon(
+                  onPressed: _cyclePlaybackSpeed,
+                  icon: const Icon(Icons.speed_rounded, size: 16),
+                  label: Text(
+                    'السرعة: ${_playbackSpeed}x',
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primaryBlue,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
                 ),
               ],
             ),
