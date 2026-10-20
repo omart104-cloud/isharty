@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../shared/providers/app_state_provider.dart';
+import '../../sign_gloss/sign_gloss.dart';
+import 'cubit/dictionary_cubit.dart';
 import '../data/sign_model.dart';
 import '../data/signs_data.dart';
 
-class SignDetailSheet extends ConsumerStatefulWidget {
+class SignDetailSheet extends StatefulWidget {
   final SignModel sign;
 
   const SignDetailSheet({
@@ -25,19 +26,21 @@ class SignDetailSheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<SignDetailSheet> createState() => _SignDetailSheetState();
+  State<SignDetailSheet> createState() => _SignDetailSheetState();
 }
 
-class _SignDetailSheetState extends ConsumerState<SignDetailSheet>
+class _SignDetailSheetState extends State<SignDetailSheet>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _waveAnimation;
   bool _isPlaying = true;
+  late int _viewModeIndex;
 
   @override
   void initState() {
     super.initState();
+    _viewModeIndex = widget.sign.hasVideo ? 0 : 1;
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -71,11 +74,11 @@ class _SignDetailSheetState extends ConsumerState<SignDetailSheet>
 
   @override
   Widget build(BuildContext context) {
-    final isFav = ref.watch(
-      appStateProvider.select((s) => s.favoriteSignIds.contains(widget.sign.id)),
+    final isFav = context.select<DictionaryCubit, bool>(
+      (c) => c.state.favoriteSignIds.contains(widget.sign.id),
     );
-    final isCompleted = ref.watch(
-      appStateProvider.select((s) => s.completedSignIds.contains(widget.sign.id)),
+    final isCompleted = context.select<DictionaryCubit, bool>(
+      (c) => c.state.completedSignIds.contains(widget.sign.id),
     );
 
     // Look up related signs
@@ -145,7 +148,7 @@ class _SignDetailSheetState extends ConsumerState<SignDetailSheet>
                     // Favorite Toggle
                     IconButton(
                       onPressed: () {
-                        ref.read(appStateProvider.notifier).toggleFavorite(widget.sign.id);
+                        context.read<DictionaryCubit>().toggleFavorite(widget.sign.id);
                       },
                       icon: Icon(
                         isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
@@ -155,7 +158,7 @@ class _SignDetailSheetState extends ConsumerState<SignDetailSheet>
                     // Completion Toggle
                     IconButton(
                       onPressed: () {
-                        ref.read(appStateProvider.notifier).toggleCompleted(widget.sign.id);
+                        context.read<DictionaryCubit>().toggleCompleted(widget.sign.id);
                       },
                       icon: Icon(
                         isCompleted
@@ -176,128 +179,18 @@ class _SignDetailSheetState extends ConsumerState<SignDetailSheet>
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.standard),
               children: [
-                // Animated Sign Gesture Visualization Area
-                Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.heroCardGradient,
-                    borderRadius: AppSpacing.roundedCard,
-                    boxShadow: AppSpacing.softShadow,
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Background rings
-                      AnimatedBuilder(
-                        animation: _animController,
-                        builder: (context, child) {
-                          return Container(
-                            width: 140 * _scaleAnimation.value,
-                            height: 140 * _scaleAnimation.value,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.cyanAccent.withOpacity(0.25),
-                                width: 2,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      // Animated Gesture Hand
-                      AnimatedBuilder(
-                        animation: _animController,
-                        builder: (context, child) {
-                          return Transform.translate(
-                            offset: Offset(_waveAnimation.value, 0),
-                            child: Transform.scale(
-                              scale: _scaleAnimation.value,
-                              child: Container(
-                                width: 90,
-                                height: 90,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.cyanAccent.withOpacity(0.4),
-                                      blurRadius: 20,
-                                      spreadRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    widget.sign.gestureSymbol,
-                                    style: const TextStyle(fontSize: 44),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                // Visual Mode Switcher (Video vs Gesture Animation)
+                if (widget.sign.hasVideo) ...[
+                  _buildViewModeSwitcher(),
+                  const SizedBox(height: AppSpacing.standard),
+                ],
 
-                      // ESL Tag Badge
-                      Positioned(
-                        top: AppSpacing.small,
-                        right: AppSpacing.small,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withOpacity(0.3)),
-                          ),
-                          child: const Text(
-                            'لغة الإشارة المصرية ESL',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
+                // Video Player or Animated Gesture Visualization Area
+                if (_viewModeIndex == 0 && widget.sign.hasVideo)
+                  _buildVideoSection()
+                else
+                  _buildGestureAnimation(),
 
-                      // Animation Control (Play / Pause)
-                      Positioned(
-                        bottom: AppSpacing.small,
-                        left: AppSpacing.small,
-                        child: InkWell(
-                          onTap: _togglePlay,
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.35),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _isPlaying ? 'إيقاف مؤقت' : 'تشغيل الحركة',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 const SizedBox(height: AppSpacing.standard),
 
                 // Movement Description Box
@@ -469,6 +362,317 @@ class _SignDetailSheetState extends ConsumerState<SignDetailSheet>
                   const SizedBox(height: AppSpacing.large),
                 ],
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildViewModeSwitcher() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.mainBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: () => setState(() => _viewModeIndex = 0),
+              borderRadius: BorderRadius.circular(10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: _viewModeIndex == 0 ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: _viewModeIndex == 0
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.play_circle_fill_rounded,
+                      size: 18,
+                      color: _viewModeIndex == 0 ? AppColors.primaryNavy : AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'فيديو الإشارة',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: _viewModeIndex == 0 ? FontWeight.bold : FontWeight.w500,
+                        color: _viewModeIndex == 0 ? AppColors.primaryNavy : AppColors.secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: () => setState(() => _viewModeIndex = 1),
+              borderRadius: BorderRadius.circular(10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: _viewModeIndex == 1 ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: _viewModeIndex == 1
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.gesture_rounded,
+                      size: 18,
+                      color: _viewModeIndex == 1 ? AppColors.primaryNavy : AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'الحركة التوضيحية',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: _viewModeIndex == 1 ? FontWeight.bold : FontWeight.w500,
+                        color: _viewModeIndex == 1 ? AppColors.primaryNavy : AppColors.secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideoSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: SignGlossVideoPlayer(
+            videoUrl: widget.sign.videoUrl!,
+            glossTitle: widget.sign.arabicWord,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.mainBackground,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: AppColors.emeraldGreen.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.verified_rounded,
+                  size: 16,
+                  color: AppColors.emeraldGreen,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'فيديو معتمد من Yale ASL Signbank',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryNavy,
+                      ),
+                    ),
+                    if (widget.sign.glossEnglish != null)
+                      Text(
+                        'Annotation: ${widget.sign.glossEnglish} • Gloss #${widget.sign.signbankGlossId ?? ""}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.secondaryText,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (widget.sign.signbankGlossId != null)
+                FilledButton.tonal(
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => SignGlossScreen(
+                          initialGlossId: widget.sign.signbankGlossId!,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('تفاصيل', style: TextStyle(fontSize: 11)),
+                      SizedBox(width: 2),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 10),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGestureAnimation() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        gradient: AppColors.heroCardGradient,
+        borderRadius: AppSpacing.roundedCard,
+        boxShadow: AppSpacing.softShadow,
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Background rings
+          AnimatedBuilder(
+            animation: _animController,
+            builder: (context, child) {
+              return Container(
+                width: 140 * _scaleAnimation.value,
+                height: 140 * _scaleAnimation.value,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.cyanAccent.withOpacity(0.25),
+                    width: 2,
+                  ),
+                ),
+              );
+            },
+          ),
+          // Animated Gesture Hand
+          AnimatedBuilder(
+            animation: _animController,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(_waveAnimation.value, 0),
+                child: Transform.scale(
+                  scale: _scaleAnimation.value,
+                  child: Container(
+                    width: 90,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.cyanAccent.withOpacity(0.4),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        widget.sign.gestureSymbol,
+                        style: const TextStyle(fontSize: 44),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // ESL Tag Badge
+          Positioned(
+            top: AppSpacing.small,
+            right: AppSpacing.small,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.3)),
+              ),
+              child: const Text(
+                'لغة الإشارة المصرية ESL',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+
+          // Animation Control (Play / Pause)
+          Positioned(
+            bottom: AppSpacing.small,
+            left: AppSpacing.small,
+            child: InkWell(
+              onTap: _togglePlay,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isPlaying ? 'إيقاف مؤقت' : 'تشغيل الحركة',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

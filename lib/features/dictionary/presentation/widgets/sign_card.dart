@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../shared/providers/app_state_provider.dart';
 import '../../data/sign_model.dart';
+import '../cubit/dictionary_cubit.dart';
 import '../sign_detail_sheet.dart';
 
-class SignCard extends ConsumerStatefulWidget {
+class SignCard extends StatefulWidget {
   final SignModel sign;
   final bool isHorizontalCompact;
 
@@ -18,19 +18,19 @@ class SignCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<SignCard> createState() => _SignCardState();
+  State<SignCard> createState() => _SignCardState();
 }
 
-class _SignCardState extends ConsumerState<SignCard> {
+class _SignCardState extends State<SignCard> {
   bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    final isFav = ref.watch(
-      appStateProvider.select((s) => s.favoriteSignIds.contains(widget.sign.id)),
+    final isFav = context.select<DictionaryCubit, bool>(
+      (c) => c.state.favoriteSignIds.contains(widget.sign.id),
     );
-    final isCompleted = ref.watch(
-      appStateProvider.select((s) => s.completedSignIds.contains(widget.sign.id)),
+    final isCompleted = context.select<DictionaryCubit, bool>(
+      (c) => c.state.completedSignIds.contains(widget.sign.id),
     );
 
     if (widget.isHorizontalCompact) {
@@ -86,19 +86,33 @@ class _SignCardState extends ConsumerState<SignCard> {
                       ),
                     ),
                   ),
-                  InkWell(
-                    onTap: () {
-                      ref.read(appStateProvider.notifier).toggleFavorite(widget.sign.id);
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Icon(
-                        isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        size: 18,
-                        color: isFav ? AppColors.softCoral : AppColors.mutedText,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.sign.hasVideo)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4.0),
+                          child: Icon(
+                            Icons.play_circle_fill_rounded,
+                            size: 15,
+                            color: AppColors.primaryBlue.withOpacity(0.8),
+                          ),
+                        ),
+                      InkWell(
+                        onTap: () {
+                          context.read<DictionaryCubit>().toggleFavorite(widget.sign.id);
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                            size: 18,
+                            color: isFav ? AppColors.softCoral : AppColors.mutedText,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -268,6 +282,35 @@ class _SignCardState extends ConsumerState<SignCard> {
                                 ),
                               ),
                             ),
+                            if (widget.sign.hasVideo) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.emeraldGreen.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.videocam_rounded,
+                                      size: 11,
+                                      color: AppColors.emeraldGreen,
+                                    ),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'فيديو',
+                                      style: TextStyle(
+                                        color: AppColors.emeraldGreen,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],
@@ -275,7 +318,7 @@ class _SignCardState extends ConsumerState<SignCard> {
                   ),
                   IconButton(
                     onPressed: () {
-                      ref.read(appStateProvider.notifier).toggleFavorite(widget.sign.id);
+                      context.read<DictionaryCubit>().toggleFavorite(widget.sign.id);
                     },
                     icon: Icon(
                       isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,

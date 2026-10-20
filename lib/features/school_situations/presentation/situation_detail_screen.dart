@@ -4,10 +4,10 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../dictionary/data/signs_data.dart';
 import '../../dictionary/presentation/sign_detail_sheet.dart';
-import '../data/situation_model.dart';
+import '../domain/entities/situation_entity.dart';
 
 class SituationDetailScreen extends StatelessWidget {
-  final SchoolSituationModel situation;
+  final SchoolSituationEntity situation;
 
   const SituationDetailScreen({
     super.key,

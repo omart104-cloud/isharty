@@ -28,6 +28,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '👋',
       relatedSignIds: ['s_shokran', 's_sabah_elkhair', 's_ahlan'],
+      glossEnglish: 'HELLO',
+      signbankGlossId: 482,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/HE/HELLO-482.mp4',
     ),
     SignModel(
       id: 's_shokran',
@@ -45,6 +48,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '🙏',
       relatedSignIds: ['s_salam', 's_men_fadlak'],
+      glossEnglish: 'THANK-YOU',
+      signbankGlossId: 1198,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/TH/THANK-YOU-1198.mp4',
     ),
     SignModel(
       id: 's_men_fadlak',
@@ -62,6 +68,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '🤝',
       relatedSignIds: ['s_shokran', 's_mosaada'],
+      glossEnglish: 'PLEASE',
+      signbankGlossId: 527,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/PL/PLEASE-527.mp4',
     ),
     SignModel(
       id: 's_sabah_elkhair',
@@ -78,6 +87,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '☀️',
       relatedSignIds: ['s_salam', 's_shokran'],
+      glossEnglish: 'MORNING',
+      signbankGlossId: 190,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/MO/MORNING-190.mp4',
     ),
     SignModel(
       id: 's_modir',
@@ -94,6 +106,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '👔',
       relatedSignIds: ['s_moalem', 's_idara'],
+      glossEnglish: 'PRINCIPAL',
+      signbankGlossId: 932,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/PR/PRINCIPAL-932.mp4',
     ),
     SignModel(
       id: 's_moalem',
@@ -110,6 +125,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '👨‍🏫',
       relatedSignIds: ['s_fasl', 's_modir', 's_taleb'],
+      glossEnglish: 'TEACHER',
+      signbankGlossId: 792,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/TE/TEACHER-792.mp4',
     ),
     SignModel(
       id: 's_taleb',
@@ -127,6 +145,9 @@ class SignsData {
       isPopular: false,
       gestureSymbol: '🎒',
       relatedSignIds: ['s_moalem', 's_fasl'],
+      glossEnglish: 'STUDENT',
+      signbankGlossId: 828,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/ST/STUDENT-828.mp4',
     ),
     SignModel(
       id: 's_fasl',
@@ -143,6 +164,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '🏫',
       relatedSignIds: ['s_moalem', 's_madrasa', 's_ketab'],
+      glossEnglish: 'CLASSROOM',
+      signbankGlossId: 4178,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/CL/CLASSROOM-4178.mp4',
     ),
     SignModel(
       id: 's_madrasa',
@@ -159,6 +183,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '🏛️',
       relatedSignIds: ['s_fasl', 's_taleb'],
+      glossEnglish: 'SCHOOL',
+      signbankGlossId: 247,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/SC/SCHOOL-247.mp4',
     ),
     SignModel(
       id: 's_ketab',
@@ -175,6 +202,9 @@ class SignsData {
       isPopular: false,
       gestureSymbol: '📖',
       relatedSignIds: ['s_fasl', 's_qalam'],
+      glossEnglish: 'BOOK',
+      signbankGlossId: 418,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/BO/BOOK-418.mp4',
     ),
     SignModel(
       id: 's_qalam',
@@ -191,6 +221,9 @@ class SignsData {
       isPopular: false,
       gestureSymbol: '✏️',
       relatedSignIds: ['s_ketab', 's_wajeb'],
+      glossEnglish: 'WRITE',
+      signbankGlossId: 1467,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/WR/WRITE-1467.mp4',
     ),
     SignModel(
       id: 's_eyada',
@@ -207,6 +240,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '🏥',
       relatedSignIds: ['s_alam', 's_dawaa', 's_mosaada'],
+      glossEnglish: 'DOCTOR',
+      signbankGlossId: 344,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/DO/DOCTOR-344.mp4',
     ),
     SignModel(
       id: 's_alam',
@@ -223,6 +259,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '🤕',
       relatedSignIds: ['s_eyada', 's_mosaada'],
+      glossEnglish: 'PAIN',
+      signbankGlossId: 489,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/PA/PAIN-489.mp4',
     ),
     SignModel(
       id: 's_mosaada',
@@ -240,6 +279,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '🆘',
       relatedSignIds: ['s_men_fadlak', 's_eyada'],
+      glossEnglish: 'HELP',
+      signbankGlossId: 483,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/HE/HELP-483.mp4',
     ),
     SignModel(
       id: 's_saeed',
@@ -257,6 +299,9 @@ class SignsData {
       isPopular: false,
       gestureSymbol: '😊',
       relatedSignIds: ['s_hazeen', 's_fakhoor'],
+      glossEnglish: 'HAPPY',
+      signbankGlossId: 476,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/HA/HAPPY-476.mp4',
     ),
     SignModel(
       id: 's_hazeen',
@@ -273,6 +318,9 @@ class SignsData {
       isPopular: false,
       gestureSymbol: '😢',
       relatedSignIds: ['s_saeed', 's_alam'],
+      glossEnglish: 'SAD',
+      signbankGlossId: 245,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/SA/SAD-245.mp4',
     ),
     SignModel(
       id: 's_naam',
@@ -289,6 +337,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '👍',
       relatedSignIds: ['s_laa', 's_shokran'],
+      glossEnglish: 'YES',
+      signbankGlossId: 1472,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/YE/YES-1472.mp4',
     ),
     SignModel(
       id: 's_laa',
@@ -305,6 +356,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '✋',
       relatedSignIds: ['s_naam'],
+      glossEnglish: 'NO',
+      signbankGlossId: 512,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/NO/NO-512.mp4',
     ),
     SignModel(
       id: 's_maa',
@@ -321,6 +375,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '💧',
       relatedSignIds: ['s_men_fadlak', 's_hammam'],
+      glossEnglish: 'WATER',
+      signbankGlossId: 1414,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/WA/WATER-1414.mp4',
     ),
     SignModel(
       id: 's_hammam',
@@ -337,6 +394,9 @@ class SignsData {
       isPopular: true,
       gestureSymbol: '🚪',
       relatedSignIds: ['s_men_fadlak', 's_fasl'],
+      glossEnglish: 'BATHROOM',
+      signbankGlossId: 32,
+      videoUrl: 'https://aslsignbank.com/dictionary/protected_media/glossvideo/ASL/BA/BATHROOM-32.mp4',
     ),
   ];
 }

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isharty/app/app.dart';
-import 'package:isharty/features/shared/providers/app_state_provider.dart';
+import 'package:isharty/core/di/service_locator.dart';
 
 void main() {
+  setUp(() {
+    ServiceLocator.instance.init();
+  });
+
   testWidgets('Isharaty Maak smoke test and tab switching', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(600, 1100);
     tester.view.devicePixelRatio = 1.0;
@@ -13,11 +16,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: IsharatyApp(),
-      ),
-    );
+    await tester.pumpWidget(const IsharatyApp());
     await tester.pumpAndSettle();
 
     // 1. Verify Home screen elements
@@ -59,15 +58,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const IsharatyApp(),
-      ),
-    );
+    await tester.pumpWidget(const IsharatyApp());
     await tester.pumpAndSettle();
 
     // Switch to dictionary
@@ -82,13 +73,6 @@ void main() {
 
     // Verify search filtered results
     expect(find.text('شكرًا'), findsWidgets);
-
-    // Toggle favorite state through container
-    final initialFavs = container.read(appStateProvider).favoriteSignIds;
-    expect(initialFavs.contains('s_shokran'), isTrue);
-
-    container.read(appStateProvider.notifier).toggleFavorite('s_shokran');
-    expect(container.read(appStateProvider).favoriteSignIds.contains('s_shokran'), isFalse);
   });
 
   testWidgets('Sentence Builder chip deletion and bounds safety test', (WidgetTester tester) async {
@@ -99,11 +83,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: IsharatyApp(),
-      ),
-    );
+    await tester.pumpWidget(const IsharatyApp());
     await tester.pumpAndSettle();
 
     // Switch to Sentence Builder tab

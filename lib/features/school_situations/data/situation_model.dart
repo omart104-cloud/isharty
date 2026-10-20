@@ -1,35 +1,22 @@
-class SituationPhrase {
-  final String speaker;
-  final String arabicText;
-  final String signGuidance;
-  final List<String> matchedSignIds;
-  final bool isUrgent;
+import '../domain/entities/situation_entity.dart';
 
+class SituationPhrase extends SituationPhraseEntity {
   const SituationPhrase({
-    required this.speaker,
-    required this.arabicText,
-    required this.signGuidance,
-    this.matchedSignIds = const [],
-    this.isUrgent = false,
+    required super.speaker,
+    required super.arabicText,
+    required super.signGuidance,
+    super.matchedSignIds = const [],
+    super.isUrgent = false,
   });
 }
 
-class SchoolSituationModel {
-  final String id;
-  final String title;
-  final String description;
-  final String iconEmoji;
-  final int colorValue;
-  final List<SituationPhrase> phrases;
-
+class SchoolSituationModel extends SchoolSituationEntity {
   const SchoolSituationModel({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.iconEmoji,
-    required this.colorValue,
-    required this.phrases,
+    required super.id,
+    required super.title,
+    required super.description,
+    required super.iconEmoji,
+    required super.colorValue,
+    required super.phrases,
   });
-
-  int get phrasesCount => phrases.length;
 }

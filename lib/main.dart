@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/app.dart';
+import 'core/di/service_locator.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Clean Architecture dependency injection
+  ServiceLocator.instance.init();
 
   // Set system UI overlay style for modern edge-to-edge transparent look
   SystemChrome.setSystemUIOverlayStyle(
@@ -16,9 +19,5 @@ void main() {
     ),
   );
 
-  runApp(
-    const ProviderScope(
-      child: IsharatyApp(),
-    ),
-  );
+  runApp(const IsharatyApp());
 }
