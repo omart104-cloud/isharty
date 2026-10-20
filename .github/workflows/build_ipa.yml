@@ -1,0 +1,83 @@
+name: Build iOS IPA (Sideloadly)
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ipa:
+    name: Build Unsigned IPA for Sideloadly
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
+
+      - name: Print Flutter & Xcode Environment
+        run: |
+          flutter --version
+          xcodebuild -version
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Verify Code & Tests
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Build iOS Application (No Code Sign)
+        run: |
+          flutter build ios --release --no-codesign
+
+      - name: Package Payload into .ipa File
+        run: |
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -r -q IsharatyMaak.ipa Payload
+          ls -lh IsharatyMaak.ipa
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IsharatyMaak-iOS-IPA
+          path: IsharatyMaak.ipa
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Create Release (On Tag Push)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: IsharatyMaak.ipa
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Add Job Summary with Sideloadly Instructions
+        run: |
+          echo "## 🚀 تم بناء ملف IPA بنجاح!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📱 خطوات التثبيت عبر Sideloadly:" >> $GITHUB_STEP_SUMMARY
+          echo "1. قم بتحميل ملف **IsharatyMaak-iOS-IPA** من قسم **Artifacts** في نهاية صفحة الـ Workflow Run." >> $GITHUB_STEP_SUMMARY
+          echo "2. فك الضغط عن الملف المحمل للحصول على ملف \`IsharatyMaak.ipa\`." >> $GITHUB_STEP_SUMMARY
+          echo "3. افتح برنامج **Sideloadly** على جهاز الكمبيوتر الخاص بك (Windows / Mac)." >> $GITHUB_STEP_SUMMARY
+          echo "4. قم بتوصيل هاتف الآيفون بالكمبيوتر عبر الكابل، أو اختر الاتصال اللاسلكي (Wi-Fi)." >> $GITHUB_STEP_SUMMARY
+          echo "5. اسحب وأفلت ملف \`IsharatyMaak.ipa\` داخل نافذة Sideloadly." >> $GITHUB_STEP_SUMMARY
+          echo "6. أدخل حساب Apple ID الخاص بك واضغط على زر **Start** ليقوم البرنامج بالتوقيع والتثبيت الفوري على هاتفك." >> $GITHUB_STEP_SUMMARY
