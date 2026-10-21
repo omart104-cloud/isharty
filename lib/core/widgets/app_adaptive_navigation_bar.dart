@@ -72,10 +72,9 @@ class AppAdaptiveNavigationBar {
   static List<AdaptiveNavigationDestination> get adaptiveDestinations =>
       destinations
           .map((d) => AdaptiveNavigationDestination(
-                icon: d.icon,
-                selectedIcon: d.selectedIcon,
-                sfSymbol: d.sfSymbol,
-                selectedSfSymbol: d.selectedSfSymbol,
+                icon: PlatformInfo.isIOS ? d.sfSymbol : d.icon,
+                selectedIcon:
+                    PlatformInfo.isIOS ? d.selectedSfSymbol : d.selectedIcon,
                 label: d.label,
               ))
           .toList();
@@ -89,10 +88,15 @@ class AppAdaptiveNavigationBar {
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     if (isIOS) {
-      return AppLiquidGlassNavigationBar(
-        destinations: destinations,
-        currentIndex: currentIndex,
+      final bottomInset = MediaQuery.paddingOf(context).bottom;
+      return IOS26NativeTabBar(
+        destinations: adaptiveDestinations,
+        selectedIndex: currentIndex,
         onTap: onTap,
+        tint: AppColors.primaryBlue,
+        unselectedItemTint: AppColors.secondaryText,
+        minimizeBehavior: TabBarMinimizeBehavior.never,
+        height: 52.0 + bottomInset,
       );
     }
 
@@ -262,6 +266,43 @@ class AppAdaptiveScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+
+    if (isIOS && !PlatformInfo.isIOS26OrHigher()) {
+      final bottomInset = MediaQuery.paddingOf(context).bottom;
+      final barHeight = 52.0 + bottomInset;
+
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Stack(
+          children: [
+            MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                padding: MediaQuery.paddingOf(context).copyWith(
+                  bottom: barHeight,
+                ),
+              ),
+              child: body,
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: IOS26NativeTabBar(
+                destinations: AppAdaptiveNavigationBar.adaptiveDestinations,
+                selectedIndex: currentIndex,
+                onTap: onTabSelected,
+                tint: AppColors.primaryBlue,
+                unselectedItemTint: AppColors.secondaryText,
+                minimizeBehavior: TabBarMinimizeBehavior.never,
+                height: barHeight,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return AdaptiveScaffold(
       body: body,
       enableBlur: true,
@@ -269,7 +310,7 @@ class AppAdaptiveScaffold extends StatelessWidget {
       bottomNavigationBar: AdaptiveBottomNavigationBar(
         selectedIndex: currentIndex,
         onTap: onTabSelected,
-        useNativeBottomBar: false,
+        useNativeBottomBar: true,
         selectedItemColor: AppColors.primaryBlue,
         unselectedItemColor: AppColors.secondaryText,
         bottomNavigationBar: AppAdaptiveNavigationBar.build(

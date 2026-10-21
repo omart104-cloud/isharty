@@ -1,3 +1,4 @@
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -62,7 +63,7 @@ class IsharatyApp extends StatelessWidget {
                 ),
                 child: Directionality(
                   textDirection: TextDirection.rtl,
-                  child: child!,
+                  child: AdaptiveToolbarHost(child: child!),
                 ),
               );
             },

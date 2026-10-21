@@ -28,9 +28,6 @@ dependencies:
   crypto: ^3.0.7
   adaptive_platform_ui: ^1.0.2
 
-dependency_overrides:
-  adaptive_platform_ui:
-    path: packages/adaptive_platform_ui
 
 dev_dependencies:
   flutter_test:
