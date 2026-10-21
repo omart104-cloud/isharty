@@ -2,14 +2,18 @@ name: Build iOS IPA (Sideloadly)
 
 on:
   push:
-    branches: [ main, master, develop, navigation-bar ]
+    branches: [ main, master, develop, navigation-bar, adaptive_ui, '**' ]
+    tags: [ 'v*', '*.*.*' ]
   pull_request:
-    branches: [ main, master, develop, navigation-bar ]
+    branches: [ main, master, develop, navigation-bar, adaptive_ui ]
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write
 
 jobs:
   build-ipa:
