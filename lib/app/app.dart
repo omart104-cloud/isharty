@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import '../core/di/service_locator.dart';
 import '../core/theme/app_theme.dart';
-import '../core/widgets/floating_bottom_bar.dart';
+import '../core/widgets/app_adaptive_navigation_bar.dart';
 import '../features/app_navigation/presentation/cubit/app_preferences_cubit.dart';
 import '../features/app_navigation/presentation/cubit/app_preferences_state.dart';
 import '../features/dictionary/presentation/cubit/dictionary_cubit.dart';
@@ -36,6 +36,10 @@ class IsharatyApp extends StatelessWidget {
         ),
       ],
       child: BlocBuilder<AppPreferencesCubit, AppPreferencesState>(
+        buildWhen: (previous, current) =>
+            previous.fontSizeScale != current.fontSizeScale ||
+            previous.highContrast != current.highContrast ||
+            previous.reduceMotion != current.reduceMotion,
         builder: (context, prefsState) {
           return MaterialApp(
             title: 'إشارتي معاك',
@@ -87,18 +91,15 @@ class MainShellScreen extends StatelessWidget {
       ProfileScreen(),
     ];
 
-    return Scaffold(
-      extendBody: true,
+    return AppAdaptiveScaffold(
       body: IndexedStack(
         index: currentIndex,
         children: screens,
       ),
-      bottomNavigationBar: FloatingBottomBar(
-        currentIndex: currentIndex,
-        onTap: (index) {
-          context.read<AppPreferencesCubit>().setTabIndex(index);
-        },
-      ),
+      currentIndex: currentIndex,
+      onTabSelected: (index) {
+        context.read<AppPreferencesCubit>().setTabIndex(index);
+      },
     );
   }
 }

@@ -39,6 +39,59 @@ class AppTheme {
           color: AppColors.primaryNavy,
         ),
       ),
+      actionIconTheme: ActionIconThemeData(
+        backButtonIconBuilder: (BuildContext context) {
+          final platform = Theme.of(context).platform;
+          if (platform == TargetPlatform.iOS || platform == TargetPlatform.macOS) {
+            return const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 20,
+              color: AppColors.primaryNavy,
+            );
+          }
+          return const Icon(
+            Icons.arrow_back_rounded,
+            size: 24,
+            color: AppColors.primaryNavy,
+          );
+        },
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        height: 66,
+        backgroundColor: Colors.white,
+        elevation: 2,
+        shadowColor: const Color(0x1E0E3264),
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: AppColors.primaryBlue.withOpacity(0.12),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(
+              color: AppColors.primaryBlue,
+              size: 24,
+            );
+          }
+          return const IconThemeData(
+            color: AppColors.secondaryText,
+            size: 24,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primaryBlue,
+            );
+          }
+          return const TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: AppColors.secondaryText,
+          );
+        }),
+      ),
       cardTheme: CardThemeData(
         color: AppColors.surfaceWhite,
         elevation: 0,
