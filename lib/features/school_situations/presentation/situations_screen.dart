@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/app_adaptive_app_bar.dart';
 import 'cubit/situations_cubit.dart';
 import 'cubit/situations_state.dart';
 import 'situation_detail_screen.dart';
@@ -18,8 +19,8 @@ class SituationsScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: AppColors.mainBackground,
-          appBar: AppBar(
-            title: const Text('مواقف المدرسة'),
+          appBar: const AppAdaptiveAppBar(
+            titleText: 'مواقف المدرسة',
           ),
           body: ListView.separated(
             padding: const EdgeInsets.only(

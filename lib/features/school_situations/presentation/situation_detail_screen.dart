@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/app_adaptive_app_bar.dart';
 import '../../dictionary/data/signs_data.dart';
 import '../../dictionary/presentation/sign_detail_sheet.dart';
 import '../domain/entities/situation_entity.dart';
@@ -20,8 +21,8 @@ class SituationDetailScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.mainBackground,
-      appBar: AppBar(
-        title: Text(situation.title),
+      appBar: AppAdaptiveAppBar(
+        titleText: situation.title,
       ),
       body: ListView(
         padding: const EdgeInsets.only(

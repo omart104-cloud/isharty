@@ -1,9 +1,11 @@
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/app_adaptive_app_bar.dart';
 import '../../app_navigation/presentation/cubit/app_preferences_cubit.dart';
 import '../../app_navigation/presentation/cubit/app_preferences_state.dart';
 import '../../dictionary/presentation/cubit/dictionary_cubit.dart';
@@ -122,8 +124,8 @@ class ProfileScreen extends StatelessWidget {
 
             return Scaffold(
               backgroundColor: AppColors.mainBackground,
-              appBar: AppBar(
-                title: const Text('حسابي والإعدادات'),
+              appBar: const AppAdaptiveAppBar(
+                titleText: 'حسابي والإعدادات',
               ),
               body: ListView(
                 padding: const EdgeInsets.only(
@@ -370,29 +372,47 @@ class ProfileScreen extends StatelessWidget {
                       borderRadius: AppSpacing.roundedCard,
                       child: Column(
                         children: [
-                          SwitchListTile(
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.standard,
+                              vertical: 2,
+                            ),
                             title: Text(
                               'التباين العالي للألوان',
                               style: AppTypography.titleMedium.copyWith(fontSize: 14.5),
                             ),
                             subtitle: const Text('تعزيز وضوح النصوص والرموز للمساعدة البصرية'),
-                            value: prefsState.highContrast,
-                            activeColor: AppColors.primaryBlue,
-                            onChanged: (val) {
-                              context.read<AppPreferencesCubit>().toggleHighContrast(val);
+                            trailing: AdaptiveSwitch(
+                              value: prefsState.highContrast,
+                              activeColor: AppColors.primaryBlue,
+                              onChanged: (val) {
+                                context.read<AppPreferencesCubit>().toggleHighContrast(val);
+                              },
+                            ),
+                            onTap: () {
+                              context.read<AppPreferencesCubit>().toggleHighContrast(!prefsState.highContrast);
                             },
                           ),
                           const Divider(color: AppColors.cardBorder, height: 1),
-                          SwitchListTile(
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.standard,
+                              vertical: 2,
+                            ),
                             title: Text(
                               'تقليل الحركة والمؤثرات',
                               style: AppTypography.titleMedium.copyWith(fontSize: 14.5),
                             ),
                             subtitle: const Text('إيقاف الحركات الممتدة لتوفير البطارية والراحة'),
-                            value: prefsState.reduceMotion,
-                            activeColor: AppColors.primaryBlue,
-                            onChanged: (val) {
-                              context.read<AppPreferencesCubit>().toggleReduceMotion(val);
+                            trailing: AdaptiveSwitch(
+                              value: prefsState.reduceMotion,
+                              activeColor: AppColors.primaryBlue,
+                              onChanged: (val) {
+                                context.read<AppPreferencesCubit>().toggleReduceMotion(val);
+                              },
+                            ),
+                            onTap: () {
+                              context.read<AppPreferencesCubit>().toggleReduceMotion(!prefsState.reduceMotion);
                             },
                           ),
                         ],

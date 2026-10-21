@@ -1,9 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/app_adaptive_app_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../sign_gloss/sign_gloss.dart';
 import 'cubit/dictionary_cubit.dart';
@@ -42,15 +44,14 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.mainBackground,
-          appBar: AppBar(
-            title: const Text('قاموس الإشارات'),
+          appBar: AppAdaptiveAppBar(
+            titleText: 'قاموس الإشارات',
             actions: [
-              IconButton(
+              AppAdaptiveAppBarAction(
                 tooltip: 'قاموس ASL Signbank (Yale)',
-                icon: const Icon(
-                  Icons.video_library_rounded,
-                  color: AppColors.primaryNavy,
-                ),
+                materialIcon: Icons.video_library_rounded,
+                cupertinoIcon: CupertinoIcons.film,
+                color: AppColors.primaryNavy,
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -59,27 +60,36 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                   );
                 },
               ),
-              IconButton(
+              AppAdaptiveAppBarAction(
                 tooltip: state.onlyVideos ? 'عرض الكل' : 'بالفيديو فقط',
-                icon: Icon(
-                  state.onlyVideos ? Icons.videocam_rounded : Icons.videocam_outlined,
-                  color: state.onlyVideos ? AppColors.emeraldGreen : AppColors.primaryNavy,
-                ),
+                materialIcon: state.onlyVideos
+                    ? Icons.videocam_rounded
+                    : Icons.videocam_outlined,
+                cupertinoIcon: state.onlyVideos
+                    ? CupertinoIcons.video_camera_solid
+                    : CupertinoIcons.video_camera,
+                isActive: state.onlyVideos,
+                activeColor: AppColors.emeraldGreen,
+                color: AppColors.primaryNavy,
                 onPressed: () {
                   context.read<DictionaryCubit>().toggleOnlyVideos();
                 },
               ),
-              IconButton(
+              AppAdaptiveAppBarAction(
                 tooltip: 'المفضلة فقط',
-                icon: Icon(
-                  state.onlyFavorites ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                  color: state.onlyFavorites ? AppColors.softCoral : AppColors.primaryNavy,
-                ),
+                materialIcon: state.onlyFavorites
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                cupertinoIcon: state.onlyFavorites
+                    ? CupertinoIcons.heart_fill
+                    : CupertinoIcons.heart,
+                isActive: state.onlyFavorites,
+                activeColor: AppColors.softCoral,
+                color: AppColors.primaryNavy,
                 onPressed: () {
                   context.read<DictionaryCubit>().toggleOnlyFavorites();
                 },
               ),
-              const SizedBox(width: 8),
             ],
           ),
           body: Column(

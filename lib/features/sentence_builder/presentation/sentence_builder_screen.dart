@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,6 +6,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/app_adaptive_app_bar.dart';
+import '../../../core/widgets/app_center_toast.dart';
 import '../../dictionary/presentation/cubit/dictionary_cubit.dart';
 import 'cubit/sentence_builder_cubit.dart';
 import 'cubit/sentence_builder_state.dart';
@@ -16,23 +19,17 @@ class SentenceBuilderScreen extends StatelessWidget {
   void _copyText(BuildContext context, String text) {
     if (text.isEmpty) return;
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('تم نسخ الجملة: "$text"'),
-        backgroundColor: AppColors.emeraldGreen,
-        duration: const Duration(seconds: 2),
-      ),
+    AppCenterToast.showCopySuccess(
+      context,
+      message: 'تم نسخ الجملة بنجاح',
     );
   }
 
   void _saveSentence(BuildContext context) {
     context.read<SentenceBuilderCubit>().saveCurrentSentence();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('تم حفظ الجملة بنجاح في ملفك الشخصي ⭐'),
-        backgroundColor: AppColors.primaryBlue,
-        duration: Duration(seconds: 2),
-      ),
+    AppCenterToast.showSaveSuccess(
+      context,
+      message: 'تم حفظ الجملة في ملفك الشخصي ⭐',
     );
   }
 
@@ -47,28 +44,34 @@ class SentenceBuilderScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: AppColors.mainBackground,
-          appBar: AppBar(
-            title: const Text('تركيب جملة بلغة الإشارة'),
-            actions: [
-              if (selectedSigns.isNotEmpty) ...[
-                IconButton(
-                  tooltip: 'نسخ النص',
-                  icon: const Icon(LucideIcons.copy, color: AppColors.primaryNavy),
-                  onPressed: () => _copyText(context, sentenceText),
-                ),
-                IconButton(
-                  tooltip: 'حفظ الجملة',
-                  icon: const Icon(LucideIcons.bookmark, color: AppColors.primaryNavy),
-                  onPressed: () => _saveSentence(context),
-                ),
-                IconButton(
-                  tooltip: 'مسح الكل',
-                  icon: const Icon(LucideIcons.trash2, color: AppColors.softCoral),
-                  onPressed: () => context.read<SentenceBuilderCubit>().clearSentence(),
-                ),
-              ],
-              const SizedBox(width: 8),
-            ],
+          appBar: AppAdaptiveAppBar(
+            titleText: 'تركيب جملة بلغة الإشارة',
+            actions: selectedSigns.isNotEmpty
+                ? [
+                    AppAdaptiveAppBarAction(
+                      tooltip: 'نسخ النص',
+                      materialIcon: LucideIcons.copy,
+                      cupertinoIcon: CupertinoIcons.doc_on_doc,
+                      color: AppColors.primaryNavy,
+                      onPressed: () => _copyText(context, sentenceText),
+                    ),
+                    AppAdaptiveAppBarAction(
+                      tooltip: 'حفظ الجملة',
+                      materialIcon: LucideIcons.bookmark,
+                      cupertinoIcon: CupertinoIcons.bookmark,
+                      color: AppColors.primaryNavy,
+                      onPressed: () => _saveSentence(context),
+                    ),
+                    AppAdaptiveAppBarAction(
+                      tooltip: 'مسح الكل',
+                      materialIcon: LucideIcons.trash2,
+                      cupertinoIcon: CupertinoIcons.trash,
+                      color: AppColors.softCoral,
+                      onPressed: () =>
+                          context.read<SentenceBuilderCubit>().clearSentence(),
+                    ),
+                  ]
+                : null,
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.only(

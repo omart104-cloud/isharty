@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_adaptive_app_bar.dart';
 import '../cubit/sign_gloss_cubit.dart';
 import '../cubit/sign_gloss_state.dart';
 import '../repository/signbank_repository.dart';
@@ -91,42 +93,15 @@ class _SignGlossViewState extends State<SignGlossView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.mainBackground,
-      appBar: AppBar(
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'ASL Signbank Gloss',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: AppColors.primaryNavy,
-              ),
-            ),
-            Text(
-              'Haskins Laboratories • Yale University',
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.secondaryText,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: AppColors.cardBorder,
-            height: 1,
-          ),
-        ),
+      appBar: AppAdaptiveAppBar(
+        titleText: 'ASL Signbank Gloss',
+        subtitleText: 'Haskins Laboratories • Yale University',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline_rounded, color: AppColors.primaryNavy),
+          AppAdaptiveAppBarAction(
+            materialIcon: Icons.info_outline_rounded,
+            cupertinoIcon: CupertinoIcons.info_circle,
             tooltip: 'About ASL Signbank',
+            color: AppColors.primaryNavy,
             onPressed: () => _showAboutDialog(context),
           ),
         ],
