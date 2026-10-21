@@ -1,10 +1,18 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  exclude:
+    - "packages/**"
+    - "build/**"
   errors:
     deprecated_member_use: ignore
+    use_null_aware_elements: ignore
+    unnecessary_underscores: ignore
 
 linter:
   rules:
     prefer_const_constructors: true
     prefer_const_declarations: true
+    use_null_aware_elements: false
+    unnecessary_underscores: false
+

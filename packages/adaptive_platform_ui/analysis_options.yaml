@@ -1,4 +1,13 @@
 include: package:flutter_lints/flutter.yaml
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+analyzer:
+  errors:
+    deprecated_member_use: ignore
+    use_null_aware_elements: ignore
+    unnecessary_underscores: ignore
+
+linter:
+  rules:
+    use_null_aware_elements: false
+    unnecessary_underscores: false
+
