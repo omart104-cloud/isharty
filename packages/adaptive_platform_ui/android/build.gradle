@@ -1,0 +1,18 @@
+group 'com.berkaycatak.adaptive_platform_ui'
+version '1.0'
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace 'com.berkaycatak.adaptive_platform_ui'
+    compileSdk 34
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        minSdk 21
+    }
+}

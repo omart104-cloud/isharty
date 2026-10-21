@@ -41,16 +41,17 @@ class AppTheme {
       ),
       actionIconTheme: ActionIconThemeData(
         backButtonIconBuilder: (BuildContext context) {
+          final isRtl = Directionality.of(context) == TextDirection.rtl;
           final platform = Theme.of(context).platform;
           if (platform == TargetPlatform.iOS || platform == TargetPlatform.macOS) {
-            return const Icon(
-              Icons.arrow_back_ios_new_rounded,
+            return Icon(
+              isRtl ? Icons.arrow_forward_ios_rounded : Icons.arrow_back_ios_new_rounded,
               size: 20,
               color: AppColors.primaryNavy,
             );
           }
-          return const Icon(
-            Icons.arrow_back_rounded,
+          return Icon(
+            isRtl ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
             size: 24,
             color: AppColors.primaryNavy,
           );

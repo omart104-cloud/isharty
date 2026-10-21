@@ -148,5 +148,59 @@ void main() {
         debugDefaultTargetPlatformOverride = null;
       }
     });
+
+    testWidgets('AppAdaptiveBackButton renders reversed chevron in RTL (Arabic) on iOS', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.iOS),
+            home: const Directionality(
+              textDirection: TextDirection.rtl,
+              child: Scaffold(
+                appBar: PreferredSize(
+                  preferredSize: Size.fromHeight(56),
+                  child: AppAdaptiveBackButton(),
+                ),
+                body: Center(child: Text('صفحة عربية')),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byIcon(Icons.arrow_forward_ios_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsNothing);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('AppAdaptiveBackButton renders reversed arrow in RTL (Arabic) on Android', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      try {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.android),
+            home: const Directionality(
+              textDirection: TextDirection.rtl,
+              child: Scaffold(
+                appBar: PreferredSize(
+                  preferredSize: Size.fromHeight(56),
+                  child: AppAdaptiveBackButton(),
+                ),
+                body: Center(child: Text('صفحة عربية')),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byIcon(Icons.arrow_forward_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
   });
 }

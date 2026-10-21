@@ -24,6 +24,7 @@ class AppAdaptiveBackButton extends StatelessWidget {
     final theme = Theme.of(context);
     final isIOS = theme.platform == TargetPlatform.iOS ||
         theme.platform == TargetPlatform.macOS;
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
     final effectiveColor = color ?? AppColors.primaryNavy;
     final effectiveTooltip = tooltip ??
         MaterialLocalizations.of(context).backButtonTooltip;
@@ -40,7 +41,9 @@ class AppAdaptiveBackButton extends StatelessWidget {
     if (isIOS) {
       return IconButton(
         icon: Icon(
-          Icons.arrow_back_ios_new_rounded,
+          isRtl
+              ? Icons.arrow_forward_ios_rounded
+              : Icons.arrow_back_ios_new_rounded,
           size: 20,
           color: effectiveColor,
         ),
@@ -53,7 +56,7 @@ class AppAdaptiveBackButton extends StatelessWidget {
 
     return IconButton(
       icon: Icon(
-        Icons.arrow_back_rounded,
+        isRtl ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
         size: 24,
         color: effectiveColor,
       ),
