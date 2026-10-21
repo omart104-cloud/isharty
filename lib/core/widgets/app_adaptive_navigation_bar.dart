@@ -1,8 +1,11 @@
+import 'dart:ui';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 
-/// Configuration for individual navigation destinations.
+/// Navigation item configuration shared across platforms.
 class NavigationItemConfig {
   final int index;
   final String label;
@@ -21,7 +24,7 @@ class NavigationItemConfig {
   });
 }
 
-/// Centralized adaptive navigation destination configurations.
+/// Adaptive navigation destinations definition
 class AppAdaptiveNavigationBar {
   static const List<NavigationItemConfig> destinations = [
     NavigationItemConfig(
@@ -86,12 +89,10 @@ class AppAdaptiveNavigationBar {
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     if (isIOS) {
-      return IOS26NativeTabBar(
-        destinations: adaptiveDestinations,
-        selectedIndex: currentIndex,
+      return AppLiquidGlassNavigationBar(
+        destinations: destinations,
+        currentIndex: currentIndex,
         onTap: onTap,
-        tint: AppColors.primaryBlue,
-        unselectedItemTint: AppColors.secondaryText,
       );
     }
 
@@ -147,8 +148,105 @@ class AppAdaptiveNavigationBar {
   }
 }
 
+/// iOS Liquid Glass navigation bar with authentic frosted blur,
+/// safe area padding, and smooth haptic feedback.
+class AppLiquidGlassNavigationBar extends StatelessWidget {
+  final List<NavigationItemConfig> destinations;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const AppLiquidGlassNavigationBar({
+    super.key,
+    required this.destinations,
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 25.0, sigmaY: 25.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF1C1C1E).withValues(alpha: 0.72)
+                : Colors.white.withValues(alpha: 0.75),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.white.withValues(alpha: 0.85),
+                width: 0.5,
+              ),
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 16,
+                offset: Offset(0, -4),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: SizedBox(
+            height: 52,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(destinations.length, (index) {
+                final item = destinations[index];
+                final isSelected = index == currentIndex;
+
+                return Expanded(
+                  child: CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    pressedOpacity: 0.65,
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      onTap(index);
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          isSelected ? item.selectedIcon : item.icon,
+                          size: 23,
+                          color: isSelected
+                              ? AppColors.primaryBlue
+                              : AppColors.secondaryText,
+                        ),
+                        const SizedBox(height: 2.5),
+                        Text(
+                          item.label,
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 10.5,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? AppColors.primaryBlue
+                                : AppColors.secondaryText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// An adaptive scaffold using adaptive_platform_ui:
-/// - iOS: Native Cupertino-style Liquid Glass navigation bar via UITabBar / UIVisualEffectView
+/// - iOS: Native Cupertino-style Liquid Glass navigation bar with frosted blur
 /// - Android: Material 3 NavigationBar
 class AppAdaptiveScaffold extends StatelessWidget {
   final Widget body;
@@ -171,7 +269,7 @@ class AppAdaptiveScaffold extends StatelessWidget {
       bottomNavigationBar: AdaptiveBottomNavigationBar(
         selectedIndex: currentIndex,
         onTap: onTabSelected,
-        useNativeBottomBar: true,
+        useNativeBottomBar: false,
         selectedItemColor: AppColors.primaryBlue,
         unselectedItemColor: AppColors.secondaryText,
         bottomNavigationBar: AppAdaptiveNavigationBar.build(

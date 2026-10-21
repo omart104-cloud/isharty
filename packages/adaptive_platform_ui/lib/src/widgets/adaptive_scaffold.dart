@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:adaptive_platform_ui/src/widgets/ios26/ios26_native_tab_bar.dart';
+import 'package:adaptive_platform_ui/src/widgets/ios26/ios26_tab_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -574,8 +575,16 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         // Determine which tab bar to use based on platform and configuration
         Widget? tabBar;
 
-        // iOS 26+ with useNativeBottomBar=true -> Use native tab bar
-        if (PlatformInfo.isIOS26OrHigher() && useNativeBottomBar) {
+        // Priority 1: Custom bottomNavigationBar (if provided)
+        if (widget.bottomNavigationBar!.bottomNavigationBar != null) {
+          tabBar = widget.bottomNavigationBar!.bottomNavigationBar;
+        }
+        // Priority 2: Custom CupertinoTabBar (if provided)
+        else if (widget.bottomNavigationBar!.cupertinoTabBar != null) {
+          tabBar = widget.bottomNavigationBar!.cupertinoTabBar;
+        }
+        // Priority 3: iOS 26+ native tab bar (if useNativeBottomBar is explicitly true)
+        else if (PlatformInfo.isIOS26OrHigher() && useNativeBottomBar) {
           tabBar = _MinimizableTabBar(
             key: _tabBarKey,
             selectedIndex: widget.bottomNavigationBar!.selectedIndex!,
@@ -589,83 +598,38 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
             hidden: widget.tabBarHidden,
           );
         }
-        // iOS 26+ with useNativeBottomBar=false OR iOS <26
+        // Priority 4: Built-in Liquid Glass tab bar from items
         else {
-          // Priority 1: Custom CupertinoTabBar (if provided)
-          if (widget.bottomNavigationBar!.cupertinoTabBar != null) {
-            tabBar = widget.bottomNavigationBar!.cupertinoTabBar;
-          }
-          // Priority 2: Build from items
-          else {
-            final unselectedColor =
-                widget.bottomNavigationBar!.unselectedItemColor;
-
-            tabBar = CupertinoTabBar(
-              currentIndex: widget.bottomNavigationBar!.selectedIndex!,
-              onTap: widget.bottomNavigationBar!.onTap!,
-              activeColor: widget.bottomNavigationBar!.selectedItemColor,
-              items: widget.bottomNavigationBar!.items!.map((dest) {
-                Widget iconWidget = _buildNavigationIconWidget(
-                  rawIcon: dest.icon,
-                  color: unselectedColor,
-                  platform: TargetPlatform.iOS,
-                );
-
-                Widget activeIconWidget = _buildNavigationIconWidget(
-                  rawIcon: dest.selectedIcon ?? dest.icon,
-                  platform: TargetPlatform.iOS,
-                );
-
-                if (dest.hasBadge) {
-                  iconWidget = dest.wrapWithBadge(iconWidget);
-                  activeIconWidget = dest.wrapWithBadge(activeIconWidget);
-                }
-
-                return BottomNavigationBarItem(
-                  icon: iconWidget,
-                  activeIcon: activeIconWidget,
-                  label: dest.label,
-                );
-              }).toList(),
-            );
-          }
+          tabBar = IOS26TabBar(
+            destinations: widget.bottomNavigationBar!.items!,
+            selectedIndex: widget.bottomNavigationBar!.selectedIndex!,
+            onTap: widget.bottomNavigationBar!.onTap!,
+          );
         }
 
-        // Wrap body with Stack if floatingActionButton is provided
-        Widget bodyWidget = Column(
-          children: [
-            Expanded(
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  // Forward scroll notifications to _MinimizableTabBar state (iOS 26+ native only)
-                  if (PlatformInfo.isIOS26OrHigher() && useNativeBottomBar) {
-                    _tabBarKey.currentState?.handleScrollNotification(
-                      notification,
-                    );
-                  }
-                  return false; // Let it bubble up
-                },
-                child: PlatformInfo.isIOS26OrHigher() && useNativeBottomBar
-                    ? Stack(
-                        children: [
-                          widget.body ?? const SizedBox.shrink(),
-                          // On iPhone Duo the fixed chrome shows the tabs at
-                          // the bottom of the trailing bar instead, so the
-                          // bottom bar is not built at all.
-                          if (!_tabsInTrailingBar(context))
-                            Positioned(
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              child: tabBar!,
-                            ),
-                        ],
-                      )
-                    : widget.body ?? const SizedBox.shrink(),
-              ),
+        final bottomInset = MediaQuery.paddingOf(context).bottom;
+        final barHeight = 56.0 + bottomInset;
+
+        final bodyWithInsets = MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            padding: MediaQuery.paddingOf(context).copyWith(
+              bottom: barHeight,
             ),
-            // Show tab bar at bottom for non-native cases
-            if (!PlatformInfo.isIOS26OrHigher() || !useNativeBottomBar) tabBar!,
+          ),
+          child: widget.body ?? const SizedBox.shrink(),
+        );
+
+        // Wrap body with Stack so Liquid Glass tab bar floats above scrolling content
+        Widget bodyWidget = Stack(
+          children: [
+            bodyWithInsets,
+            if (!_tabsInTrailingBar(context) && tabBar != null)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: tabBar,
+              ),
           ],
         );
 
