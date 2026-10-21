@@ -877,7 +877,8 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         bottomNavBar = NavigationBar(
           selectedIndex: widget.bottomNavigationBar!.selectedIndex!,
           onDestinationSelected: widget.bottomNavigationBar!.onTap!,
-          indicatorColor: widget.bottomNavigationBar!.selectedItemColor,
+          indicatorColor: widget.bottomNavigationBar!.selectedItemColor
+              ?.withValues(alpha: 0.12),
           destinations: widget.bottomNavigationBar!.items!.map((dest) {
             Widget iconWidget = _buildNavigationIconWidget(
               rawIcon: dest.icon,
@@ -1114,6 +1115,14 @@ class _MinimizableTabBarState extends State<_MinimizableTabBar>
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MinimizableTabBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex && _isMinimized) {
+      _expandTabBar();
+    }
   }
 
   // Called from parent's NotificationListener
