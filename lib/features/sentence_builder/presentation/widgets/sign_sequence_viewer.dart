@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_center_toast.dart';
 import '../../../dictionary/data/sign_model.dart';
 import '../../../dictionary/presentation/sign_detail_sheet.dart';
+import '../../../sign_gloss/views/widgets/sign_video_player.dart';
 
 class SignSequenceViewer extends StatefulWidget {
   final List<SignModel> signs;
@@ -20,45 +25,108 @@ class SignSequenceViewer extends StatefulWidget {
 class _SignSequenceViewerState extends State<SignSequenceViewer> {
   int _activeStepIndex = 0;
   bool _isPlayingSequence = false;
+  Timer? _fallbackTimer;
 
   @override
   void didUpdateWidget(covariant SignSequenceViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.signs.isEmpty) {
+      _stopSequence();
       _activeStepIndex = 0;
-      _isPlayingSequence = false;
     } else if (_activeStepIndex >= widget.signs.length) {
+      _stopSequence();
       _activeStepIndex = widget.signs.length - 1;
     }
   }
 
+  @override
+  void dispose() {
+    _fallbackTimer?.cancel();
+    super.dispose();
+  }
+
+  void _stopSequence() {
+    _fallbackTimer?.cancel();
+    if (mounted && _isPlayingSequence) {
+      setState(() => _isPlayingSequence = false);
+    }
+  }
+
+  void _toggleSequencePlayback() {
+    if (widget.signs.isEmpty) return;
+
+    if (_isPlayingSequence) {
+      _stopSequence();
+      return;
+    }
+
+    setState(() {
+      if (_activeStepIndex >= widget.signs.length - 1) {
+        _activeStepIndex = 0;
+      }
+      _isPlayingSequence = true;
+    });
+
+    _handleCurrentStepPlayback();
+  }
+
+  void _handleCurrentStepPlayback() {
+    _fallbackTimer?.cancel();
+    if (!_isPlayingSequence || widget.signs.isEmpty) return;
+
+    final safeIndex = _activeStepIndex.clamp(0, widget.signs.length - 1);
+    final activeSign = widget.signs[safeIndex];
+
+    // If the active sign doesn't have a video, pause briefly on the gesture symbol then advance
+    if (!activeSign.hasVideo ||
+        activeSign.videoUrl == null ||
+        activeSign.videoUrl!.trim().isEmpty) {
+      _fallbackTimer = Timer(const Duration(milliseconds: 2200), () {
+        _onVideoCompleted();
+      });
+    }
+  }
+
+  void _onVideoCompleted() {
+    if (!_isPlayingSequence || !mounted) return;
+
+    if (_activeStepIndex < widget.signs.length - 1) {
+      setState(() {
+        _activeStepIndex++;
+      });
+      _handleCurrentStepPlayback();
+    } else {
+      setState(() {
+        _isPlayingSequence = false;
+      });
+      AppCenterToast.show(
+        context,
+        message: 'اكتمل تشغيل تسلسل الإشارات بنجاح',
+        icon: Icons.check_circle_rounded,
+        iconColor: AppColors.emeraldGreen,
+      );
+    }
+  }
+
+  void _selectStep(int index) {
+    if (index == _activeStepIndex) return;
+    _stopSequence();
+    setState(() {
+      _activeStepIndex = index.clamp(0, widget.signs.length - 1);
+    });
+  }
+
   void _nextStep() {
     if (_activeStepIndex < widget.signs.length - 1) {
+      _stopSequence();
       setState(() => _activeStepIndex++);
     }
   }
 
   void _prevStep() {
     if (_activeStepIndex > 0) {
+      _stopSequence();
       setState(() => _activeStepIndex--);
-    }
-  }
-
-  Future<void> _playFullSequence() async {
-    if (widget.signs.isEmpty) return;
-    setState(() {
-      _isPlayingSequence = true;
-      _activeStepIndex = 0;
-    });
-
-    for (int i = 0; i < widget.signs.length; i++) {
-      if (!mounted || !_isPlayingSequence || i >= widget.signs.length) break;
-      setState(() => _activeStepIndex = i);
-      await Future.delayed(const Duration(milliseconds: 1400));
-    }
-
-    if (mounted) {
-      setState(() => _isPlayingSequence = false);
     }
   }
 
@@ -126,14 +194,14 @@ class _SignSequenceViewerState extends State<SignSequenceViewer> {
                 ],
               ),
               ElevatedButton.icon(
-                onPressed: _isPlayingSequence ? null : _playFullSequence,
+                onPressed: _toggleSequencePlayback,
                 icon: Icon(
-                  _isPlayingSequence ? Icons.hourglass_top_rounded : Icons.play_arrow_rounded,
+                  _isPlayingSequence ? Icons.stop_rounded : Icons.play_arrow_rounded,
                   size: 18,
                 ),
-                label: Text(_isPlayingSequence ? 'جارٍ العرض...' : 'تشغيل التسلسل'),
+                label: Text(_isPlayingSequence ? 'إيقاف التسلسل' : 'تشغيل التسلسل'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryNavy,
+                  backgroundColor: _isPlayingSequence ? AppColors.softCoral : AppColors.primaryNavy,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -181,30 +249,73 @@ class _SignSequenceViewerState extends State<SignSequenceViewer> {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.medium),
+                const SizedBox(height: AppSpacing.compact),
 
-                // Center visual
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.cyanAccent.withOpacity(0.5),
-                        blurRadius: 20,
+                // Center visual: Video Player if available, or gesture symbol fallback
+                if (activeSign.hasVideo &&
+                    activeSign.videoUrl != null &&
+                    activeSign.videoUrl!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.compact),
+                    child: Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: SignGlossVideoPlayer(
+                          key: ValueKey('sign_seq_${safeIndex}_${activeSign.id}_$_isPlayingSequence'),
+                          videoUrl: activeSign.videoUrl!,
+                          glossTitle: activeSign.arabicWord,
+                          looping: !_isPlayingSequence,
+                          autoPlay: true,
+                          onCompleted: _isPlayingSequence ? _onVideoCompleted : null,
+                          onError: _isPlayingSequence
+                              ? () {
+                                  _fallbackTimer?.cancel();
+                                  _fallbackTimer = Timer(const Duration(seconds: 2), _onVideoCompleted);
+                                }
+                              : null,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      activeSign.gestureSymbol,
-                      style: const TextStyle(fontSize: 40),
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.medium),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.cyanAccent.withOpacity(0.5),
+                                blurRadius: 20,
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              activeSign.gestureSymbol,
+                              style: const TextStyle(fontSize: 40),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'لا يتوفر فيديو لهذه الإشارة حالياً',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.medium),
+
+                const SizedBox(height: AppSpacing.compact),
 
                 Text(
                   activeSign.description,
@@ -275,7 +386,7 @@ class _SignSequenceViewerState extends State<SignSequenceViewer> {
                 return Padding(
                   padding: const EdgeInsets.only(left: 8.0),
                   child: InkWell(
-                    onTap: () => setState(() => _activeStepIndex = index),
+                    onTap: () => _selectStep(index),
                     borderRadius: BorderRadius.circular(10),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

@@ -3,6 +3,7 @@ import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import '../theme/app_colors.dart';
 
 /// Navigation item configuration shared across platforms.
@@ -13,6 +14,8 @@ class NavigationItemConfig {
   final IconData selectedIcon;
   final String sfSymbol;
   final String selectedSfSymbol;
+  final IconData cupertinoIcon;
+  final IconData selectedCupertinoIcon;
 
   const NavigationItemConfig({
     required this.index,
@@ -21,6 +24,8 @@ class NavigationItemConfig {
     required this.selectedIcon,
     required this.sfSymbol,
     required this.selectedSfSymbol,
+    required this.cupertinoIcon,
+    required this.selectedCupertinoIcon,
   });
 }
 
@@ -34,6 +39,8 @@ class AppAdaptiveNavigationBar {
       selectedIcon: Icons.home_rounded,
       sfSymbol: 'house',
       selectedSfSymbol: 'house.fill',
+      cupertinoIcon: CupertinoIcons.house,
+      selectedCupertinoIcon: CupertinoIcons.house_fill,
     ),
     NavigationItemConfig(
       index: 1,
@@ -42,6 +49,8 @@ class AppAdaptiveNavigationBar {
       selectedIcon: Icons.menu_book_rounded,
       sfSymbol: 'book',
       selectedSfSymbol: 'book.fill',
+      cupertinoIcon: CupertinoIcons.book,
+      selectedCupertinoIcon: CupertinoIcons.book_fill,
     ),
     NavigationItemConfig(
       index: 2,
@@ -50,6 +59,8 @@ class AppAdaptiveNavigationBar {
       selectedIcon: Icons.chat_bubble_rounded,
       sfSymbol: 'bubble.left.and.bubble.right',
       selectedSfSymbol: 'bubble.left.and.bubble.right.fill',
+      cupertinoIcon: CupertinoIcons.chat_bubble_2,
+      selectedCupertinoIcon: CupertinoIcons.chat_bubble_2_fill,
     ),
     NavigationItemConfig(
       index: 3,
@@ -58,6 +69,8 @@ class AppAdaptiveNavigationBar {
       selectedIcon: Icons.school_rounded,
       sfSymbol: 'building.2',
       selectedSfSymbol: 'building.2.fill',
+      cupertinoIcon: CupertinoIcons.building_2_fill,
+      selectedCupertinoIcon: CupertinoIcons.building_2_fill,
     ),
     NavigationItemConfig(
       index: 4,
@@ -66,6 +79,8 @@ class AppAdaptiveNavigationBar {
       selectedIcon: Icons.person_rounded,
       sfSymbol: 'person',
       selectedSfSymbol: 'person.fill',
+      cupertinoIcon: CupertinoIcons.person,
+      selectedCupertinoIcon: CupertinoIcons.person_fill,
     ),
   ];
 
@@ -88,71 +103,155 @@ class AppAdaptiveNavigationBar {
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     if (isIOS) {
-      final bottomInset = MediaQuery.paddingOf(context).bottom;
-      return IOS26NativeTabBar(
-        destinations: adaptiveDestinations,
-        selectedIndex: currentIndex,
+      if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+        return SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: LiquidGlassTabBar(
+            items: destinations.map((d) {
+              return LiquidGlassTabItem(
+                label: d.label,
+                icon: NativeLiquidGlassIcon.sfSymbol(d.sfSymbol),
+                selectedIcon: NativeLiquidGlassIcon.sfSymbol(d.selectedSfSymbol),
+                selectedItemColor: AppColors.primaryBlue,
+              );
+            }).toList(),
+            currentIndex: currentIndex,
+            onTabSelected: onTap,
+            height: 64,
+            showLabels: true,
+            selectedItemColor: AppColors.primaryBlue,
+            labelTextStyle: const TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        );
+      }
+
+      return AppLiquidGlassNavigationBar(
+        destinations: destinations,
+        currentIndex: currentIndex,
         onTap: onTap,
-        tint: AppColors.primaryBlue,
-        unselectedItemTint: AppColors.secondaryText,
-        minimizeBehavior: TabBarMinimizeBehavior.never,
-        height: 52.0 + bottomInset,
       );
     }
 
-    return NavigationBarTheme(
-      data: NavigationBarThemeData(
+    // Android: Floating bottom navigation bar
+    return AppAndroidFloatingNavigationBar(
+      destinations: destinations,
+      currentIndex: currentIndex,
+      onTap: onTap,
+    );
+  }
+}
+
+/// Android Floating Bottom Navigation Bar with elevated rounded pill aesthetics.
+class AppAndroidFloatingNavigationBar extends StatelessWidget {
+  final List<NavigationItemConfig> destinations;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const AppAndroidFloatingNavigationBar({
+    super.key,
+    required this.destinations,
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? const Color(0xFF1E222B) : Colors.white;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Container(
         height: 66,
-        backgroundColor: Colors.white,
-        indicatorColor: AppColors.primaryBlue.withValues(alpha: 0.12),
-        elevation: 2,
-        shadowColor: const Color(0x1E0E3264),
-        surfaceTintColor: Colors.transparent,
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(
-              color: AppColors.primaryBlue,
-              size: 24,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : const Color(0x120E3264),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.35)
+                  : const Color(0x180E3264),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(destinations.length, (index) {
+            final item = destinations[index];
+            final isSelected = index == currentIndex;
+
+            return Expanded(
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onTap(index);
+                },
+                borderRadius: BorderRadius.circular(24),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primaryBlue.withValues(alpha: 0.12)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          isSelected ? item.selectedIcon : item.icon,
+                          size: 22,
+                          color: isSelected
+                              ? AppColors.primaryBlue
+                              : AppColors.secondaryText,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 10.5,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected
+                              ? AppColors.primaryBlue
+                              : AppColors.secondaryText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             );
-          }
-          return const IconThemeData(
-            color: AppColors.secondaryText,
-            size: 24,
-          );
-        }),
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primaryBlue,
-            );
-          }
-          return const TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: AppColors.secondaryText,
-          );
-        }),
-      ),
-      child: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: onTap,
-        destinations: destinations.map((d) {
-          return NavigationDestination(
-            icon: Icon(d.icon),
-            selectedIcon: Icon(d.selectedIcon),
-            label: d.label,
-          );
-        }).toList(),
+          }),
+        ),
       ),
     );
   }
 }
 
-/// iOS Liquid Glass navigation bar with authentic frosted blur,
+/// iOS Liquid Glass navigation bar with frosted blur,
 /// safe area padding, and smooth haptic feedback.
 class AppLiquidGlassNavigationBar extends StatelessWidget {
   final List<NavigationItemConfig> destinations;
@@ -216,7 +315,9 @@ class AppLiquidGlassNavigationBar extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          isSelected ? item.selectedIcon : item.icon,
+                          isSelected
+                              ? item.selectedCupertinoIcon
+                              : item.cupertinoIcon,
                           size: 23,
                           color: isSelected
                               ? AppColors.primaryBlue
@@ -249,9 +350,9 @@ class AppLiquidGlassNavigationBar extends StatelessWidget {
   }
 }
 
-/// An adaptive scaffold using adaptive_platform_ui:
-/// - iOS: Native Cupertino-style Liquid Glass navigation bar with frosted blur
-/// - Android: Material 3 NavigationBar
+/// An adaptive scaffold:
+/// - iOS: native_liquid_glass LiquidGlassTabBar (with authentic blur fallback)
+/// - Android: Floating elevated bottom navigation bar
 class AppAdaptiveScaffold extends StatelessWidget {
   final Widget body;
   final int currentIndex;
@@ -268,9 +369,9 @@ class AppAdaptiveScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
-    if (isIOS && !PlatformInfo.isIOS26OrHigher()) {
+    if (isIOS) {
       final bottomInset = MediaQuery.paddingOf(context).bottom;
-      final barHeight = 52.0 + bottomInset;
+      final barHeight = 56.0 + bottomInset;
 
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -288,14 +389,10 @@ class AppAdaptiveScaffold extends StatelessWidget {
               left: 0,
               right: 0,
               bottom: 0,
-              child: IOS26NativeTabBar(
-                destinations: AppAdaptiveNavigationBar.adaptiveDestinations,
-                selectedIndex: currentIndex,
+              child: AppAdaptiveNavigationBar.build(
+                context: context,
+                currentIndex: currentIndex,
                 onTap: onTabSelected,
-                tint: AppColors.primaryBlue,
-                unselectedItemTint: AppColors.secondaryText,
-                minimizeBehavior: TabBarMinimizeBehavior.never,
-                height: barHeight,
               ),
             ),
           ],
@@ -303,22 +400,34 @@ class AppAdaptiveScaffold extends StatelessWidget {
       );
     }
 
-    return AdaptiveScaffold(
-      body: body,
-      enableBlur: true,
-      minimizeBehavior: TabBarMinimizeBehavior.never,
-      bottomNavigationBar: AdaptiveBottomNavigationBar(
-        selectedIndex: currentIndex,
-        onTap: onTabSelected,
-        useNativeBottomBar: true,
-        selectedItemColor: AppColors.primaryBlue,
-        unselectedItemColor: AppColors.secondaryText,
-        bottomNavigationBar: AppAdaptiveNavigationBar.build(
-          context: context,
-          currentIndex: currentIndex,
-          onTap: onTabSelected,
-        ),
-        items: AppAdaptiveNavigationBar.adaptiveDestinations,
+    // Android: Floating bottom navigation bar
+    const floatingBarHeight = 84.0;
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: MediaQuery.paddingOf(context).copyWith(
+                bottom: floatingBarHeight,
+              ),
+            ),
+            child: body,
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              child: AppAndroidFloatingNavigationBar(
+                destinations: AppAdaptiveNavigationBar.destinations,
+                currentIndex: currentIndex,
+                onTap: onTabSelected,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
