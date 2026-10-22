@@ -18,7 +18,7 @@ permissions:
 jobs:
   build-ipa:
     name: Build Unsigned IPA for Sideloadly
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout Repository
