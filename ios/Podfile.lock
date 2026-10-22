@@ -55,7 +55,7 @@ SPEC CHECKSUMS:
   adaptive_platform_ui: df7a9b2e8063dd0e8eb0fa0bcc9467780f608f86
   CocoaLumberjack: 12545b2899dcaeec69b82c27b174042259c1ec27
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
-  native_liquid_glass: c77cd74256902cf8afcc6bf6baf0ebdc11bb4fad
+  native_liquid_glass: a120f6e6dbaf895f33edc69d2dbc1d9085452d16
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   SVGKit: 1ad7513f8c74d9652f94ed64ddecda1a23864dea

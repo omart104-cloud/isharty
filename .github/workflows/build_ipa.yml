@@ -46,6 +46,9 @@ jobs:
 
       - name: Build iOS Application (No Code Sign)
         run: |
+          flutter build ios --config-only --release --no-codesign
+          find ios/ -name "Package.swift" -exec sed -i '' 's/\.iOS("12.0")/\.iOS("15.0")/g' {} + 2>/dev/null || true
+          find ios/ -name "Package.swift" -exec sed -i '' 's/\.iOS("13.0")/\.iOS("15.0")/g' {} + 2>/dev/null || true
           flutter build ios --release --no-codesign
 
       - name: Package Payload into .ipa File

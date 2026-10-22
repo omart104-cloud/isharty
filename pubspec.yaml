@@ -32,6 +32,8 @@ dependencies:
 dependency_overrides:
   adaptive_platform_ui:
     path: packages/adaptive_platform_ui
+  native_liquid_glass:
+    path: packages/native_liquid_glass
 
 
 dev_dependencies:
