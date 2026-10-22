@@ -3,7 +3,6 @@ import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:native_liquid_glass/native_liquid_glass.dart';
 import '../theme/app_colors.dart';
 
 /// Navigation item configuration shared across platforms.
@@ -103,33 +102,6 @@ class AppAdaptiveNavigationBar {
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     if (isIOS) {
-      if (NativeLiquidGlassUtils.supportsLiquidGlass) {
-        return SafeArea(
-          top: false,
-          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: LiquidGlassTabBar(
-            items: destinations.map((d) {
-              return LiquidGlassTabItem(
-                label: d.label,
-                icon: NativeLiquidGlassIcon.sfSymbol(d.sfSymbol),
-                selectedIcon: NativeLiquidGlassIcon.sfSymbol(d.selectedSfSymbol),
-                selectedItemColor: AppColors.primaryBlue,
-              );
-            }).toList(),
-            currentIndex: currentIndex,
-            onTabSelected: onTap,
-            height: 64,
-            showLabels: true,
-            selectedItemColor: AppColors.primaryBlue,
-            labelTextStyle: const TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        );
-      }
-
       return AppLiquidGlassNavigationBar(
         destinations: destinations,
         currentIndex: currentIndex,

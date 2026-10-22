@@ -1,20 +1,12 @@
 PODS:
   - adaptive_platform_ui (0.1.0):
     - Flutter
-  - CocoaLumberjack (3.10.0):
-    - CocoaLumberjack/Core (= 3.10.0)
-  - CocoaLumberjack/Core (3.10.0)
   - Flutter (1.0.0)
-  - native_liquid_glass (0.2.10):
-    - Flutter
-    - SVGKit
   - package_info_plus (0.4.5):
     - Flutter
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - SVGKit (3.0.0):
-    - CocoaLumberjack (~> 3.0)
   - video_player_avfoundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -24,24 +16,16 @@ PODS:
 DEPENDENCIES:
   - adaptive_platform_ui (from `.symlinks/plugins/adaptive_platform_ui/ios`)
   - Flutter (from `Flutter`)
-  - native_liquid_glass (from `.symlinks/plugins/native_liquid_glass/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
   - wakelock_plus (from `.symlinks/plugins/wakelock_plus/ios`)
-
-SPEC REPOS:
-  trunk:
-    - CocoaLumberjack
-    - SVGKit
 
 EXTERNAL SOURCES:
   adaptive_platform_ui:
     :path: ".symlinks/plugins/adaptive_platform_ui/ios"
   Flutter:
     :path: Flutter
-  native_liquid_glass:
-    :path: ".symlinks/plugins/native_liquid_glass/ios"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   shared_preferences_foundation:
@@ -53,12 +37,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   adaptive_platform_ui: df7a9b2e8063dd0e8eb0fa0bcc9467780f608f86
-  CocoaLumberjack: 12545b2899dcaeec69b82c27b174042259c1ec27
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
-  native_liquid_glass: c77cd74256902cf8afcc6bf6baf0ebdc11bb4fad
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
-  SVGKit: 1ad7513f8c74d9652f94ed64ddecda1a23864dea
   video_player_avfoundation: 3453f792138786248960ca029747fcd9f318ef52
   wakelock_plus: d4ca1e4e4bc9de42cb55d57b5bdc158af318e3c6
 
