@@ -16,7 +16,7 @@ UIKit-native iOS platform views for rendering Liquid Glass style components in F
   s.source_files = 'native_liquid_glass/Sources/native_liquid_glass/**/*.swift'
   s.dependency 'Flutter'
   s.dependency 'SVGKit'
-  s.platform = :ios, '15.0'
+  s.platform = :ios, '26.0'
 
   # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
